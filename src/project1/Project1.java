@@ -3,12 +3,10 @@ package project1;
 import com.jogamp.common.nio.Buffers;
 import com.jogamp.opengl.*;
 import com.jogamp.opengl.awt.GLCanvas;
-import graphicslib3D.GLSLUtils;
 import graphicslib3D.Matrix3D;
 
 import javax.swing.*;
 import java.nio.FloatBuffer;
-import java.util.Random;
 
 import static com.jogamp.opengl.GL.*;
 import static com.jogamp.opengl.GL2ES2.GL_FRAGMENT_SHADER;
@@ -18,12 +16,12 @@ import static graphicslib3D.GLSLUtils.readShaderSource;
 public class Project1 extends JFrame implements GLEventListener
 {
 	private GLCanvas myCanvas;
-	private int rendering_program;
+	private int renderingProgram;
 	private int vao[] = new int[1];
 	private int vbo[] = new int[2];
 	private float cameraX, cameraY, cameraZ;
-	private GLSLUtils util = new GLSLUtils();
-	private int npoints = 20000;
+	private int N = 4; // Recursion level
+	private float[] vertexPositions = new float[3 * 2]; // Three points, two coordinates
 	
 	public Project1()
 	{
@@ -42,20 +40,37 @@ public class Project1 extends JFrame implements GLEventListener
 	public void display(GLAutoDrawable drawable)
 	{
 		GL4 gl = (GL4) GLContext.getCurrentGL();
+		// Define the triangle
+		float[] v1 = new float[2];//Two coordinates
+		float[] v2 = new float[2];//Two coordinates
+		float[] v3 = new float[2];//Two coordinates
+		// The first three vertices define the starting triangle
+		// Equilateral triangle centered at the origin
+		float sideLength = 2.0f;
+		// Top vertex - x and y
+		v1[0] = 0;
+		v1[1] = sideLength * (float) Math.sqrt(3) / 3;
+		// Bottom left
+		v2[0] = -0.5f * sideLength;
+		v2[1] = -(float) Math.sqrt(3) * sideLength / 6;
+		// Bottom right
+		v3[0] = 0.5f * sideLength;
+		v3[1] = -(float) Math.sqrt(3) * sideLength / 6;
+		// Done defining triangle
 		
 		gl.glClear(GL_DEPTH_BUFFER_BIT);
 		
-		gl.glUseProgram(rendering_program);
+		gl.glUseProgram(renderingProgram);
 		
-		int mv_loc = gl.glGetUniformLocation(rendering_program, "mv_matrix");
-		int proj_loc = gl.glGetUniformLocation(rendering_program, "proj_matrix");
+		int mv_loc = gl.glGetUniformLocation(renderingProgram, "mv_matrix");
+		int proj_loc = gl.glGetUniformLocation(renderingProgram, "proj_matrix");
 		
 		float aspect = (float) myCanvas.getWidth() / (float) myCanvas.getHeight();
 		Matrix3D pMat = orthogonal(-1.5f, 1.5f, 1.5f, -1.5f, 0.1f, 1000.0f);
 		
 		Matrix3D vMat = new Matrix3D();
 		vMat.translate(-cameraX, -cameraY, -cameraZ);
-		//Just drawing 2D - not moving the object
+		// Just drawing 2D - not moving the object
 		Matrix3D mMat = new Matrix3D();
 		mMat.setToIdentity();
 		
@@ -66,78 +81,30 @@ public class Project1 extends JFrame implements GLEventListener
 		gl.glUniformMatrix4fv(mv_loc, 1, false, mvMat.getFloatValues(), 0);
 		gl.glUniformMatrix4fv(proj_loc, 1, false, pMat.getFloatValues(), 0);
 		
+		//gl.glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
 		gl.glVertexAttribPointer(0, 2, GL_FLOAT, false, 0, 0); // We are only passing two components
 		gl.glEnableVertexAttribArray(0);
 		
 		gl.glEnable(GL_DEPTH_TEST);
 		gl.glDepthFunc(GL_LEQUAL);
-		//gl.glPointSize(6.0f);
 		
-		gl.glDrawArrays(GL_POINTS, 0, npoints);
+		drawTriangle(v1, v2, v3);
+		//processTriangle(v1, v2, v3, N);
 	}
 	
 	public void init(GLAutoDrawable drawable)
 	{
 		GL4 gl = (GL4) drawable.getGL();
-		rendering_program = createShaderProgram();
-		setupVertices();
+		renderingProgram = createShaderProgram();
 		cameraX = 0.0f;
 		cameraY = 0.0f;
 		cameraZ = 3.0f;
-	}
-	
-	private void setupVertices()
-	{
-		GL4 gl = (GL4) GLContext.getCurrentGL();
-		Random random = new Random();
-		int randv;
-		float[] vertex_positions = new float[npoints * 2];
-		float[] p1 = new float[2];
-		float[] p0 = new float[2];
-		// The first three vertices define the starting triangle
-		// Equilateral triangle centered at the origin
-		float side_length = 2.0f;
-		// Top vertex - x and y
-		vertex_positions[0] = 0;
-		vertex_positions[1] = side_length * (float) Math.sqrt(3) / 3;
-		// Bottom left
-		vertex_positions[2] = -0.5f * side_length;
-		vertex_positions[3] = -(float) Math.sqrt(3) * side_length / 6;
-		// Bottom right
-		vertex_positions[4] = 0.5f * side_length;
-		vertex_positions[5] = -(float) Math.sqrt(3) * side_length / 6;
-		// Pick a random vertex p0 inside the triangle (use affine sum)
-		float alpha1, alpha2, alpha3;
-		alpha1 = random.nextFloat();
-		alpha2 = random.nextFloat() * (1 - alpha1);
-		alpha3 = 1 - alpha1 - alpha2;
-		p0[0] = alpha1 * vertex_positions[0] + alpha2 * vertex_positions[2] + alpha3 * vertex_positions[4];
-		p0[1] = alpha1 * vertex_positions[1] + alpha2 * vertex_positions[3] + alpha3 * vertex_positions[5];
-		
-		for(int i = 3; i < npoints; i++)
-		{
-			// Select random vertex
-			randv = random.nextInt(3);
-			// Calculate middle point to random vertex
-			for(int j = 0; j < 2; j++)
-			{
-				p1[j] = (p0[j] + vertex_positions[2 * randv + j]) / 2;
-			}
-			// Add p1 to the list of p oints to be drawn
-			vertex_positions[2 * i] = p1[0];
-			vertex_positions[2 * i + 1] = p1[1];
-			// p0=p1
-			p0[0] = p1[0];
-			p0[1] = p1[1];
-		}
-		
 		gl.glGenVertexArrays(vao.length, vao, 0);
 		gl.glBindVertexArray(vao[0]);
 		gl.glGenBuffers(vbo.length, vbo, 0);
 		
 		gl.glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
-		FloatBuffer vertBuf = Buffers.newDirectFloatBuffer(vertex_positions);
-		gl.glBufferData(GL_ARRAY_BUFFER, vertBuf.limit() * 4, vertBuf, GL_STATIC_DRAW);
+		
 	}
 	
 	private Matrix3D perspective(float fovy, float aspect, float n, float f)
@@ -171,7 +138,7 @@ public class Project1 extends JFrame implements GLEventListener
 	
 	public static void main(String[] args)
 	{
-		new Sierpinski2D();
+		new Project1();
 	}
 	
 	public void reshape(GLAutoDrawable drawable, int x, int y, int width, int height)
@@ -204,4 +171,52 @@ public class Project1 extends JFrame implements GLEventListener
 		gl.glLinkProgram(vfprogram);
 		return vfprogram;
 	}
+	
+	// Processing triangles
+	private void processTriangle(float[] v1, float[] v2, float[] v3, int n)
+	{
+		
+		if(n > 0) // Recurse
+		{
+			// Coordinates for middle points
+			float[] m1 = new float[2];
+			float[] m2 = new float[2];
+			float[] m3 = new float[2];
+			for(int i = 0; i < 2; i++)
+			{
+				m1[i] = (v1[i] + v2[i]) / 2;
+				m2[i] = (v2[i] + v3[i]) / 2;
+				m3[i] = (v1[i] + v3[i]) / 2;
+			}
+			// Recurse
+			processTriangle(m1, v2, m2, n - 1);
+			processTriangle(v1, m1, m3, n - 1);
+			processTriangle(m3, m2, v3, n - 1);
+		}
+		else
+		{
+			drawTriangle(v1, v2, v3); // Draw
+		}
+		
+	}
+	
+	private void drawTriangle(float[] v1, float[] v2, float[] v3)
+	{
+		GL4 gl = (GL4) GLContext.getCurrentGL();
+		// Store points in backing store
+		vertexPositions[0] = v1[0];
+		vertexPositions[1] = v1[1];
+		vertexPositions[2] = v2[0];
+		vertexPositions[3] = v2[1];
+		vertexPositions[4] = v3[0];
+		vertexPositions[5] = v3[1];
+		
+		FloatBuffer vertBuf = Buffers.newDirectFloatBuffer(vertexPositions);
+		gl.glBufferData(GL_ARRAY_BUFFER, vertBuf.limit() * 4, vertBuf, GL_STATIC_DRAW);
+		
+		// Draw now
+		gl.glDrawArrays(GL_TRIANGLES, 0, 3);
+		
+	}
+	
 }
