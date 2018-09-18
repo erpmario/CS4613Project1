@@ -24,3 +24,8 @@ hs_err_pid*
 
 # IntelliJ-specific files
 .idea
+*.2d
+*.3d
+Sierpinski2D.java
+Sierpinski2DPolygon.java
+Sierpinski3D.java
