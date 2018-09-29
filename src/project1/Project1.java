@@ -13,15 +13,25 @@ import static com.jogamp.opengl.GL2ES2.GL_FRAGMENT_SHADER;
 import static com.jogamp.opengl.GL2ES2.GL_VERTEX_SHADER;
 import static graphicslib3D.GLSLUtils.readShaderSource;
 
+/**
+ * CS-4613 Project 1 - Koch Snowflake
+ * <p>
+ * Based on Dr. Mauricio Papa's Sierpinski gasket code.
+ *
+ * @author Eric Peterson
+ */
 public class Project1 extends JFrame implements GLEventListener
 {
-	private GLCanvas myCanvas;
-	private int renderingProgram;
-	private int vao[] = new int[1];
-	private int vbo[] = new int[2];
-	private float cameraX, cameraY, cameraZ;
-	private int N = 4; // Recursion level
-	private float[] vertexPositions = new float[3 * 2]; // Three points, two coordinates
+	/*
+	 * Member Variables
+	 */
+	private GLCanvas m_myCanvas;
+	private int m_renderingProgram;
+	private int m_vao[] = new int[1];
+	private int m_vbo[] = new int[2];
+	private float m_cameraX, m_cameraY, m_cameraZ;
+	private int m_n = 4; // Recursion level
+	private float[] m_vertexPositions = new float[3 * 2]; // Three points, two coordinates
 	
 	public Project1()
 	{
@@ -30,10 +40,10 @@ public class Project1 extends JFrame implements GLEventListener
 		// Making sure we get a GL4 context for the canvas
 		GLProfile profile = GLProfile.get(GLProfile.GL4);
 		GLCapabilities capabilities = new GLCapabilities(profile);
-		myCanvas = new GLCanvas(capabilities);
+		m_myCanvas = new GLCanvas(capabilities);
 		// end GL4 context
-		myCanvas.addGLEventListener(this);
-		getContentPane().add(myCanvas);
+		m_myCanvas.addGLEventListener(this);
+		getContentPane().add(m_myCanvas);
 		this.setVisible(true);
 	}
 	
@@ -41,9 +51,9 @@ public class Project1 extends JFrame implements GLEventListener
 	{
 		GL4 gl = (GL4) GLContext.getCurrentGL();
 		// Define the triangle
-		float[] v1 = new float[2];//Two coordinates
-		float[] v2 = new float[2];//Two coordinates
-		float[] v3 = new float[2];//Two coordinates
+		float[] v1 = new float[2]; // Two coordinates
+		float[] v2 = new float[2]; // Two coordinates
+		float[] v3 = new float[2]; // Two coordinates
 		// The first three vertices define the starting triangle
 		// Equilateral triangle centered at the origin
 		float sideLength = 2.0f;
@@ -60,16 +70,16 @@ public class Project1 extends JFrame implements GLEventListener
 		
 		gl.glClear(GL_DEPTH_BUFFER_BIT);
 		
-		gl.glUseProgram(renderingProgram);
+		gl.glUseProgram(m_renderingProgram);
 		
-		int mv_loc = gl.glGetUniformLocation(renderingProgram, "mv_matrix");
-		int proj_loc = gl.glGetUniformLocation(renderingProgram, "proj_matrix");
+		int mv_loc = gl.glGetUniformLocation(m_renderingProgram, "mv_matrix");
+		int proj_loc = gl.glGetUniformLocation(m_renderingProgram, "proj_matrix");
 		
-		float aspect = (float) myCanvas.getWidth() / (float) myCanvas.getHeight();
+		float aspect = (float) m_myCanvas.getWidth() / (float) m_myCanvas.getHeight();
 		Matrix3D pMat = orthogonal(-1.5f, 1.5f, 1.5f, -1.5f, 0.1f, 1000.0f);
 		
 		Matrix3D vMat = new Matrix3D();
-		vMat.translate(-cameraX, -cameraY, -cameraZ);
+		vMat.translate(-m_cameraX, -m_cameraY, -m_cameraZ);
 		// Just drawing 2D - not moving the object
 		Matrix3D mMat = new Matrix3D();
 		mMat.setToIdentity();
@@ -81,7 +91,7 @@ public class Project1 extends JFrame implements GLEventListener
 		gl.glUniformMatrix4fv(mv_loc, 1, false, mvMat.getFloatValues(), 0);
 		gl.glUniformMatrix4fv(proj_loc, 1, false, pMat.getFloatValues(), 0);
 		
-		//gl.glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
+		//gl.glBindBuffer(GL_ARRAY_BUFFER, m_vbo[0]);
 		gl.glVertexAttribPointer(0, 2, GL_FLOAT, false, 0, 0); // We are only passing two components
 		gl.glEnableVertexAttribArray(0);
 		
@@ -89,21 +99,21 @@ public class Project1 extends JFrame implements GLEventListener
 		gl.glDepthFunc(GL_LEQUAL);
 		
 		drawTriangle(v1, v2, v3);
-		//processTriangle(v1, v2, v3, N);
+		//processTriangle(v1, v2, v3, m_n);
 	}
 	
 	public void init(GLAutoDrawable drawable)
 	{
 		GL4 gl = (GL4) drawable.getGL();
-		renderingProgram = createShaderProgram();
-		cameraX = 0.0f;
-		cameraY = 0.0f;
-		cameraZ = 3.0f;
-		gl.glGenVertexArrays(vao.length, vao, 0);
-		gl.glBindVertexArray(vao[0]);
-		gl.glGenBuffers(vbo.length, vbo, 0);
+		m_renderingProgram = createShaderProgram();
+		m_cameraX = 0.0f;
+		m_cameraY = 0.0f;
+		m_cameraZ = 3.0f;
+		gl.glGenVertexArrays(m_vao.length, m_vao, 0);
+		gl.glBindVertexArray(m_vao[0]);
+		gl.glGenBuffers(m_vbo.length, m_vbo, 0);
 		
-		gl.glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
+		gl.glBindBuffer(GL_ARRAY_BUFFER, m_vbo[0]);
 		
 	}
 	
@@ -172,6 +182,22 @@ public class Project1 extends JFrame implements GLEventListener
 		return vfprogram;
 	}
 	
+	/**
+	 * Calculates the distance between two points in two-dimensional space. Arguments should be two-dimensional float arrays. Index 0 is assumed to be the x-coordinate, and index 1 is assumed to be
+	 * the y-coordinate.
+	 *
+	 * @param v1
+	 * 		The first point.
+	 * @param v2
+	 * 		The second point.
+	 *
+	 * @return A float representing the distance between the two points as calculated by the distance formula.
+	 */
+	private float distanceBetween(float[] v1, float[] v2)
+	{
+		return (float) Math.sqrt(Math.pow(v2[0] - v1[0], 2) + Math.pow(v2[1] - v1[1], 2));
+	}
+	
 	// Processing triangles
 	private void processTriangle(float[] v1, float[] v2, float[] v3, int n)
 	{
@@ -204,14 +230,14 @@ public class Project1 extends JFrame implements GLEventListener
 	{
 		GL4 gl = (GL4) GLContext.getCurrentGL();
 		// Store points in backing store
-		vertexPositions[0] = v1[0];
-		vertexPositions[1] = v1[1];
-		vertexPositions[2] = v2[0];
-		vertexPositions[3] = v2[1];
-		vertexPositions[4] = v3[0];
-		vertexPositions[5] = v3[1];
+		m_vertexPositions[0] = v1[0];
+		m_vertexPositions[1] = v1[1];
+		m_vertexPositions[2] = v2[0];
+		m_vertexPositions[3] = v2[1];
+		m_vertexPositions[4] = v3[0];
+		m_vertexPositions[5] = v3[1];
 		
-		FloatBuffer vertBuf = Buffers.newDirectFloatBuffer(vertexPositions);
+		FloatBuffer vertBuf = Buffers.newDirectFloatBuffer(m_vertexPositions);
 		gl.glBufferData(GL_ARRAY_BUFFER, vertBuf.limit() * 4, vertBuf, GL_STATIC_DRAW);
 		
 		// Draw now
