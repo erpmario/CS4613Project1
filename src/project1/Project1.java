@@ -30,12 +30,20 @@ public class Project1 extends JFrame implements GLEventListener
 	private int m_vao[] = new int[1];
 	private int m_vbo[] = new int[2];
 	private float m_cameraX, m_cameraY, m_cameraZ;
-	private int m_n = 4; // Recursion level
-	private float[] m_vertexPositions = new float[3 * 2]; // Three points, two coordinates
+	private int m_n; // Recursion level
+	private float m_sideLength;
+	private float[] m_vertexPositions = new float[2 * 2]; // Two points, two coordinates
 	
-	public Project1()
+	public Project1(int n, float sideLength)
 	{
+		m_n = n;
+		m_sideLength = sideLength;
+		for(int i = 0; i <= m_n; ++i)
+		{
+			displayCalculations(i);
+		}
 		setTitle("Project 1 - Koch Snowflake");
+		//setSize((int) (300 * m_sideLength), (int) (300 * m_sideLength));
 		setSize(600, 600);
 		// Making sure we get a GL4 context for the canvas
 		GLProfile profile = GLProfile.get(GLProfile.GL4);
@@ -56,16 +64,15 @@ public class Project1 extends JFrame implements GLEventListener
 		float[] v3 = new float[2]; // Two coordinates
 		// The first three vertices define the starting triangle
 		// Equilateral triangle centered at the origin
-		float sideLength = 2.0f;
 		// Top vertex - x and y
 		v1[0] = 0;
-		v1[1] = sideLength * (float) Math.sqrt(3) / 3;
+		v1[1] = m_sideLength * (float) Math.sqrt(3) / 3;
 		// Bottom left
-		v2[0] = -0.5f * sideLength;
-		v2[1] = -(float) Math.sqrt(3) * sideLength / 6;
+		v2[0] = -0.5f * m_sideLength;
+		v2[1] = -(float) Math.sqrt(3) * m_sideLength / 6;
 		// Bottom right
-		v3[0] = 0.5f * sideLength;
-		v3[1] = -(float) Math.sqrt(3) * sideLength / 6;
+		v3[0] = 0.5f * m_sideLength;
+		v3[1] = -(float) Math.sqrt(3) * m_sideLength / 6;
 		// Done defining triangle
 		
 		gl.glClear(GL_DEPTH_BUFFER_BIT);
@@ -98,8 +105,7 @@ public class Project1 extends JFrame implements GLEventListener
 		gl.glEnable(GL_DEPTH_TEST);
 		gl.glDepthFunc(GL_LEQUAL);
 		
-		drawTriangle(v1, v2, v3);
-		//processTriangle(v1, v2, v3, m_n);
+		koch(v1, v2, v3);
 	}
 	
 	public void init(GLAutoDrawable drawable)
@@ -148,7 +154,51 @@ public class Project1 extends JFrame implements GLEventListener
 	
 	public static void main(String[] args)
 	{
-		new Project1();
+		int n = 0;
+		float sideLength = 2.0f;
+		boolean tryAgain;
+		do
+		{
+			try
+			{
+				tryAgain = false;
+				String response = JOptionPane.showInputDialog(null, "Enter in the number of recursion levels: ", "Koch Snowflake", JOptionPane.QUESTION_MESSAGE);
+				n = Integer.parseInt(response);
+			}
+			catch(NumberFormatException e)
+			{
+				tryAgain = true;
+			}
+		} while(tryAgain);
+		do
+		{
+			try
+			{
+				tryAgain = false;
+				String response = JOptionPane.showInputDialog(null, "Enter in the side length of the original triangle: ", "Koch Snowflake", JOptionPane.QUESTION_MESSAGE);
+				sideLength = Float.parseFloat(response);
+			}
+			catch(NumberFormatException e)
+			{
+				tryAgain = true;
+			}
+		} while(tryAgain);
+		new Project1(n, sideLength);
+	}
+	
+	private void displayCalculations(int n)
+	{
+		int sides = 3 * (int) Math.pow(4, n);
+		double effectiveSideLength = m_sideLength / Math.pow(3, n);
+		double perimeter = sides * effectiveSideLength;
+		double heightOfOriginalTriangle = m_sideLength * Math.tan(Math.toRadians(60)) / 2; // tan(60) = h / (b / 2)
+		double areaOfOriginalTriangle = m_sideLength * (heightOfOriginalTriangle) / 2; // A = b * h / 2;
+		double area = (areaOfOriginalTriangle / 5) * (8 - (3 * Math.pow((double) 4 / 9, n))); // Thank you Wikipedia.
+		
+		System.out.println("n = " + n);
+		System.out.println("Sides = " + sides);
+		System.out.println("Perimeter = " + perimeter);
+		System.out.println("Area = " + area);
 	}
 	
 	public void reshape(GLAutoDrawable drawable, int x, int y, int width, int height)
@@ -182,51 +232,111 @@ public class Project1 extends JFrame implements GLEventListener
 		return vfprogram;
 	}
 	
-	/**
-	 * Calculates the distance between two points in two-dimensional space. Arguments should be two-dimensional float arrays. Index 0 is assumed to be the x-coordinate, and index 1 is assumed to be
-	 * the y-coordinate.
-	 *
-	 * @param v1
-	 * 		The first point.
-	 * @param v2
-	 * 		The second point.
-	 *
-	 * @return A float representing the distance between the two points as calculated by the distance formula.
-	 */
-	private float distanceBetween(float[] v1, float[] v2)
+	private void koch(float[] v1, float[] v2, float[] v3)
 	{
-		return (float) Math.sqrt(Math.pow(v2[0] - v1[0], 2) + Math.pow(v2[1] - v1[1], 2));
+		processLine(v1, v2, m_n);
+		processLine(v2, v3, m_n);
+		processLine(v3, v1, m_n);
 	}
 	
 	// Processing triangles
-	private void processTriangle(float[] v1, float[] v2, float[] v3, int n)
+	private void processLine(float[] v1, float[] v2, int n)
 	{
-		
 		if(n > 0) // Recurse
 		{
-			// Coordinates for middle points
-			float[] m1 = new float[2];
-			float[] m2 = new float[2];
-			float[] m3 = new float[2];
-			for(int i = 0; i < 2; i++)
+			// Points of new triangle.
+			float[] top = new float[2];
+			float[] left = new float[2];
+			float[] right = new float[2];
+			
+			top[0] = ((float) 1 / 2) * (v2[0] + v1[0]) + ((float) Math.sqrt(3) / 6) * (v2[1] - v1[1]);
+			top[1] = ((float) 1 / 2) * (v2[1] + v1[1]) - ((float) Math.sqrt(3) / 6) * (v2[0] - v1[0]);
+			
+			for(int i = 0; i < left.length; ++i)
 			{
-				m1[i] = (v1[i] + v2[i]) / 2;
-				m2[i] = (v2[i] + v3[i]) / 2;
-				m3[i] = (v1[i] + v3[i]) / 2;
+				left[i] = v1[i] + ((float) 1 / 3) * (v2[i] - v1[i]);
+				right[i] = v2[i] - ((float) 1 / 3) * (v2[i] - v1[i]);
 			}
+			
 			// Recurse
-			processTriangle(m1, v2, m2, n - 1);
-			processTriangle(v1, m1, m3, n - 1);
-			processTriangle(m3, m2, v3, n - 1);
+			processLine(v1, left, n - 1);
+			processLine(left, top, n - 1);
+			processLine(top, right, n - 1);
+			processLine(right, v2, n - 1);
+			
+			/*// Bottom Triangle (only seen in iteration 1)
+			
+			float[] b1 = new float[2]; // Top Point
+			float[] b2 = new float[2]; // Left Point
+			float[] b3 = new float[2]; // Right Point
+			
+			b1[0] = ((float) 1 / 2) * (v3[0] + v2[0]) + ((float) Math.sqrt(3) / 6) * (v3[1] - v2[1]);
+			b1[1] = ((float) 1 / 2) * (v3[1] + v2[1]) + ((float) Math.sqrt(3) / 6) * (v2[0] - v3[0]);
+			
+			b2[0] = v3[0] + ((float) 1 / 3) * (v2[0] - v3[0]);
+			b2[1] = v3[1] + ((float) 1 / 3) * (v2[1] - v3[1]);
+			
+			b3[0] = v2[0] - ((float) 1 / 3) * (v2[0] - v3[0]);
+			b3[1] = v2[1] - ((float) 1 / 3) * (v2[1] - v3[1]);
+			
+			// Left Triangle
+			
+			float[] l1 = new float[2]; // Top Point
+			float[] l2 = new float[2]; // Left Point
+			float[] l3 = new float[2]; // Right Point
+			
+			l1[0] = ((float) 1 / 2) * (v2[0] + v1[0]) + ((float) Math.sqrt(3) / 6) * (v2[1] - v1[1]);
+			l1[1] = ((float) 1 / 2) * (v2[1] + v1[1]) + ((float) Math.sqrt(3) / 6) * (v1[0] - v2[0]);
+			
+			l2[0] = v2[0] + ((float) 1 / 3) * (v1[0] - v2[0]);
+			l2[1] = v2[1] + ((float) 1 / 3) * (v1[1] - v2[1]);
+			
+			l3[0] = v1[0] - ((float) 1 / 3) * (v1[0] - v2[0]);
+			l3[1] = v1[1] - ((float) 1 / 3) * (v1[1] - v2[1]);
+			
+			// Right Triangle
+			
+			float[] r1 = new float[2]; // Top Point
+			float[] r2 = new float[2]; // Left Point
+			float[] r3 = new float[2]; // Right Point
+			
+			r1[0] = ((float) 1 / 2) * (v1[0] + v3[0]) + ((float) Math.sqrt(3) / 6) * (v1[1] - v3[1]);
+			r1[1] = ((float) 1 / 2) * (v1[1] + v3[1]) + ((float) Math.sqrt(3) / 6) * (v3[0] - v1[0]);
+			
+			r2[0] = v1[0] + ((float) 1 / 3) * (v3[0] - v1[0]);
+			r2[1] = v1[1] + ((float) 1 / 3) * (v3[1] - v1[1]);
+			
+			r3[0] = v3[0] - ((float) 1 / 3) * (v3[0] - v1[0]);
+			r3[1] = v3[1] - ((float) 1 / 3) * (v3[1] - v1[1]);
+			
+			// Recurse
+			processLine(b1, b2, b3, n - 1);
+			processLine(l1, l2, l3, n - 1);
+			processLine(r1, r2, r3, n - 1);*/
 		}
 		else
 		{
-			drawTriangle(v1, v2, v3); // Draw
+			drawLine(v1, v2); // Draw
 		}
-		
 	}
 	
-	private void drawTriangle(float[] v1, float[] v2, float[] v3)
+	private void drawLine(float[] v1, float[] v2)
+	{
+		GL4 gl = (GL4) GLContext.getCurrentGL();
+		
+		m_vertexPositions[0] = v1[0];
+		m_vertexPositions[1] = v1[1];
+		m_vertexPositions[2] = v2[0];
+		m_vertexPositions[3] = v2[1];
+		
+		FloatBuffer vertBuf = Buffers.newDirectFloatBuffer(m_vertexPositions);
+		gl.glBufferData(GL_ARRAY_BUFFER, vertBuf.limit() * 4, vertBuf, GL_STATIC_DRAW);
+		
+		// Draw now.
+		gl.glDrawArrays(GL_LINES, 0, 2);
+	}
+	
+	/*private void drawTriangle(float[] v1, float[] v2, float[] v3)
 	{
 		GL4 gl = (GL4) GLContext.getCurrentGL();
 		// Store points in backing store
@@ -243,6 +353,6 @@ public class Project1 extends JFrame implements GLEventListener
 		// Draw now
 		gl.glDrawArrays(GL_TRIANGLES, 0, 3);
 		
-	}
+	}*/
 	
 }
