@@ -263,56 +263,6 @@ public class Project1 extends JFrame implements GLEventListener
 			processLine(left, top, n - 1);
 			processLine(top, right, n - 1);
 			processLine(right, v2, n - 1);
-			
-			/*// Bottom Triangle (only seen in iteration 1)
-			
-			float[] b1 = new float[2]; // Top Point
-			float[] b2 = new float[2]; // Left Point
-			float[] b3 = new float[2]; // Right Point
-			
-			b1[0] = ((float) 1 / 2) * (v3[0] + v2[0]) + ((float) Math.sqrt(3) / 6) * (v3[1] - v2[1]);
-			b1[1] = ((float) 1 / 2) * (v3[1] + v2[1]) + ((float) Math.sqrt(3) / 6) * (v2[0] - v3[0]);
-			
-			b2[0] = v3[0] + ((float) 1 / 3) * (v2[0] - v3[0]);
-			b2[1] = v3[1] + ((float) 1 / 3) * (v2[1] - v3[1]);
-			
-			b3[0] = v2[0] - ((float) 1 / 3) * (v2[0] - v3[0]);
-			b3[1] = v2[1] - ((float) 1 / 3) * (v2[1] - v3[1]);
-			
-			// Left Triangle
-			
-			float[] l1 = new float[2]; // Top Point
-			float[] l2 = new float[2]; // Left Point
-			float[] l3 = new float[2]; // Right Point
-			
-			l1[0] = ((float) 1 / 2) * (v2[0] + v1[0]) + ((float) Math.sqrt(3) / 6) * (v2[1] - v1[1]);
-			l1[1] = ((float) 1 / 2) * (v2[1] + v1[1]) + ((float) Math.sqrt(3) / 6) * (v1[0] - v2[0]);
-			
-			l2[0] = v2[0] + ((float) 1 / 3) * (v1[0] - v2[0]);
-			l2[1] = v2[1] + ((float) 1 / 3) * (v1[1] - v2[1]);
-			
-			l3[0] = v1[0] - ((float) 1 / 3) * (v1[0] - v2[0]);
-			l3[1] = v1[1] - ((float) 1 / 3) * (v1[1] - v2[1]);
-			
-			// Right Triangle
-			
-			float[] r1 = new float[2]; // Top Point
-			float[] r2 = new float[2]; // Left Point
-			float[] r3 = new float[2]; // Right Point
-			
-			r1[0] = ((float) 1 / 2) * (v1[0] + v3[0]) + ((float) Math.sqrt(3) / 6) * (v1[1] - v3[1]);
-			r1[1] = ((float) 1 / 2) * (v1[1] + v3[1]) + ((float) Math.sqrt(3) / 6) * (v3[0] - v1[0]);
-			
-			r2[0] = v1[0] + ((float) 1 / 3) * (v3[0] - v1[0]);
-			r2[1] = v1[1] + ((float) 1 / 3) * (v3[1] - v1[1]);
-			
-			r3[0] = v3[0] - ((float) 1 / 3) * (v3[0] - v1[0]);
-			r3[1] = v3[1] - ((float) 1 / 3) * (v3[1] - v1[1]);
-			
-			// Recurse
-			processLine(b1, b2, b3, n - 1);
-			processLine(l1, l2, l3, n - 1);
-			processLine(r1, r2, r3, n - 1);*/
 		}
 		else
 		{
@@ -335,24 +285,4 @@ public class Project1 extends JFrame implements GLEventListener
 		// Draw now.
 		gl.glDrawArrays(GL_LINES, 0, 2);
 	}
-	
-	/*private void drawTriangle(float[] v1, float[] v2, float[] v3)
-	{
-		GL4 gl = (GL4) GLContext.getCurrentGL();
-		// Store points in backing store
-		m_vertexPositions[0] = v1[0];
-		m_vertexPositions[1] = v1[1];
-		m_vertexPositions[2] = v2[0];
-		m_vertexPositions[3] = v2[1];
-		m_vertexPositions[4] = v3[0];
-		m_vertexPositions[5] = v3[1];
-		
-		FloatBuffer vertBuf = Buffers.newDirectFloatBuffer(m_vertexPositions);
-		gl.glBufferData(GL_ARRAY_BUFFER, vertBuf.limit() * 4, vertBuf, GL_STATIC_DRAW);
-		
-		// Draw now
-		gl.glDrawArrays(GL_TRIANGLES, 0, 3);
-		
-	}*/
-	
 }
