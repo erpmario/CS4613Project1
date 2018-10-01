@@ -43,7 +43,6 @@ public class Project1 extends JFrame implements GLEventListener
 			displayCalculations(i);
 		}
 		setTitle("Project 1 - Koch Snowflake");
-		//setSize((int) (300 * m_sideLength), (int) (300 * m_sideLength));
 		setSize(600, 600);
 		// Making sure we get a GL4 context for the canvas
 		GLProfile profile = GLProfile.get(GLProfile.GL4);
@@ -156,7 +155,7 @@ public class Project1 extends JFrame implements GLEventListener
 	{
 		int n = 0;
 		float sideLength = 2.0f;
-		boolean tryAgain;
+		/*boolean tryAgain;
 		do
 		{
 			try
@@ -182,7 +181,29 @@ public class Project1 extends JFrame implements GLEventListener
 			{
 				tryAgain = true;
 			}
-		} while(tryAgain);
+		} while(tryAgain);*/
+		if(args.length >= 1)
+		{
+			try
+			{
+				n = Integer.parseInt(args[0]);
+			}
+			catch(NumberFormatException e)
+			{
+				System.out.println("Invalid format for number of recursion levels. Default value of 0 is being used.");
+			}
+		}
+		if(args.length >= 2)
+		{
+			try
+			{
+				sideLength = Float.parseFloat(args[1]);
+			}
+			catch(NumberFormatException e)
+			{
+				System.out.println("Invalid format for side length of original triangle. Default value of 2.0 is being used.");
+			}
+		}
 		new Project1(n, sideLength);
 	}
 	
